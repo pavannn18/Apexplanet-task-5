@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bookzz</title>
+    <!--
+        Loading Google Fonts for a dynamic, modern aesthetic with varied typography:
+        - Bebas Neue for the main site title (bold, condensed, impactful)
+        - Montserrat for other headings (strong, modern sans-serif)
+        - Inter for body text and general UI (clean, highly readable sans-serif)
+    -->
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&family=Montserrat:wght@700;800&display=swap" rel="stylesheet">
+    <!--
+        Loading Tailwind CSS for utility-first styling.
+        This provides a robust set of classes for responsive design.
+    -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom CSS for specific elements not easily covered by Tailwind or for overrides */
+        body {
+            font-family: 'Inter', sans-serif; /* Body text font */
+            margin: 0;
+            background-color: #0D0D0D; /* Deep black background */
+            color: #E0E0E0; /* Light gray text */
+        }
+
+        /* Ensure smooth scrolling for anchors */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Specific font for the main site title */
+        h1 {
+            font-family: 'Bebas Neue', sans-serif; /* Main site title font */
+            color: #B00000; /* Vibrant maroon for headings */
+            letter-spacing: 0.05em; /* Slightly increased letter spacing for Bebas Neue */
+            /* New: Subtle text shadow for creative effect */
+            text-shadow: 0 0 8px rgba(176, 0, 0, 0.7), 0 0 15px rgba(176, 0, 0, 0.4);
+        }
+
+        /* Fonts for other headings (h2, h3, h4) */
+        h2, h3, h4 {
+            font-family: 'Montserrat', sans-serif; /* Headings font */
+            color: #B00000; /* Vibrant maroon for headings */
+        }
+
+        /* Cart sidebar specific styling to control its off-screen position and transition */
+        .sidebar {
+            transform: translateX(100%); /* Initially off-screen to the right */
+            transition: transform 0.4s ease-in-out; /* Smooth slide-in/out effect */
+            z-index: 1000; /* Ensure it's above other content when active */
+            position: fixed; /* Fixed position for sidebar */
+            top: 0;
+            right: 0;
+            height: 100%;
+            overflow-y: auto; /* Enable scrolling for cart items */
+            background-color: #1A1A1A; /* Darker black for sidebar */
+            border-left: 2px solid #B00000; /* Maroon border */
+        }
+
+        .sidebar.active {
+            transform: translateX(0); /* Slides into view */
+        }
+
+        /* Overlay for when the cart is open or checkout modal is active */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8); /* More opaque overlay */
+            z-index: 999; /* Below the sidebar but above other content */
+            display: none; /* Hidden by default */
+        }
+
+        .overlay.active {
+            display: block; /* Show when cart is active */
+        }
+
+        /* Basic styling for the message box (instead of alert()) */
+        .message-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #B00000; /* Maroon message box */
+            color: #FFFFFF; /* White text */
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.6); /* Stronger shadow */
+            z-index: 2000; /* On top of everything */
+            display: none; /* Hidden by default */
+            text-align: center;
+            border: 2px solid #E0E0E0; /* Light gray border */
+        }
+
+        .message-box.show {
+            display: block;
+        }
+
+        /* Custom button styling for dynamic look */
+        .dynamic-btn {
+            background-color: #B00000; /* Maroon */
+            color: #FFFFFF; /* White text */
+            border: none;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4); /* Pronounced shadow */
+            transition: all 0.2s ease-in-out;
+            font-family: 'Inter', sans-serif; /* Button text font */
+            font-weight: 600; /* Semi-bold for buttons */
+        }
+
+        .dynamic-btn:hover {
+            background-color: #800000; /* Darker maroon on hover */
+            transform: translateY(-3px); /* Lift effect */
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.6);
+        }
+
+        /* Specific styling for book cards */
+        .book-card { /* This is now a div */
+            background-color: #1A1A1A; /* Darker black for cards */
+            border: 1px solid #333333; /* Subtle dark gray border */
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4); /* Deep shadow */
+            padding: 15px;
+            position: relative;
+            overflow: hidden;
+            color: #E0E0E0; /* Light gray text */
+            cursor: pointer; /* Indicate it's clickable for the main card action */
+            display: flex; /* Make it a flex container */
+            flex-direction: column; /* Stack children vertically */
+            justify-content: space-between; /* Distribute space */
+        }
+
+        .book-card:hover {
+            transform: translateY(-5px) scale(1.02); /* More pronounced lift and slight scale */
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+        }
+
+        .book-card img {
+            border: 1px solid #333333; /* Subtle border for images */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .book-card h3 {
+            color: #B00000; /* Maroon for book titles */
+            font-family: 'Montserrat', sans-serif; /* Book title font */
+        }
+
+        .book-card p.author {
+            color: #A0A0A0; /* Slightly darker gray for author */
+            font-family: 'Inter', sans-serif; /* Author font */
+        }
+
+        .book-card p.price {
+            color: #B00000; /* Maroon for price */
+            font-family: 'Inter', sans-serif; /* Price font */
+            font-weight: 700; /* Bold price */
+        }
+
+        /* Adjust filter dropdown for dynamic look */
+        #categoryFilter {
+            background-color: #333333; /* Dark gray background */
+            border: 1px solid #555555; /* Slightly lighter gray border */
+            color: #E0E0E0; /* Light gray text */
+            box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.2); /* Inset shadow */
+            font-family: 'Inter', sans-serif; /* Filter dropdown font */
+        }
+
+        /* Cart item styling */
+        .cart-item {
+            border-bottom: 1px solid #333333; /* Solid dark gray border */
+            font-family: 'Inter', sans-serif; /* Cart item font */
+        }
+
+        .cart-item h4 {
+            font-family: 'Inter', sans-serif; /* Cart item title font */
+            font-weight: 600;
+        }
+
+        .cart-item p {
+            font-family: 'Inter', sans-serif; /* Cart item price/quantity font */
+        }
+
+        /* Checkout Modal Styling */
+        .checkout-modal {
+            background-color: #1A1A1A; /* Darker black for modal */
+            border: 3px solid #B00000; /* Maroon border */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6); /* More pronounced shadow */
+            color: #E0E0E0; /* Light gray text */
+        }
+
+        .checkout-modal-header {
+            border-bottom: 1px solid #333333; /* Dark gray border */
+        }
+
+        .checkout-modal-header h2 {
+            color: #B00000; /* Maroon for modal heading */
+            font-family: 'Montserrat', sans-serif; /* Checkout modal heading font */
+        }
+
+        .checkout-modal-close {
+            color: #E0E0E0; /* Light gray close button */
+        }
+
+        .checkout-form label {
+            color: #E0E0E0; /* Light gray label text */
+            font-family: 'Inter', sans-serif; /* Form label font */
+        }
+
+        .checkout-form input[type="text"],
+        .checkout-form input[type="email"],
+        .checkout-form textarea {
+            border: 1px solid #555555; /* Darker gray border */
+            background-color: #333333; /* Darker gray input background */
+            color: #FFFFFF; /* White input text */
+            box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.2);
+            font-family: 'Inter', sans-serif; /* Form input font */
+        }
+
+        .checkout-order-summary {
+            border-top: 1px solid #333333; /* Dark gray border */
+        }
+
+        .checkout-order-summary h3 {
+            color: #B00000; /* Maroon for summary heading */
+            font-family: 'Montserrat', sans-serif; /* Order summary heading font */
+        }
+
+        .checkout-order-item {
+            color: #A0A0A0; /* Slightly darker gray for summary items */
+            font-family: 'Inter', sans-serif; /* Order item font */
+        }
+
+        .checkout-order-total {
+            color: #B00000; /* Maroon for total price */
+            font-family: 'Inter', sans-serif; /* Order total font */
+            font-weight: 700; /* Bold order total */
+        }
+
+        /* Styling for LLM buttons */
+        .llm-btn-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.75rem; /* Space above buttons */
+            justify-content: center;
+            flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+        }
+
+        .llm-btn {
+            background-color: #333333; /* Dark gray background */
+            color: #E0E0E0; /* Light gray text */
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.25rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+            border: 1px solid #555555;
+        }
+
+        .llm-btn:hover {
+            background-color: #B00000; /* Maroon on hover */
+            color: #FFFFFF; /* White text on hover */
+            border-color: #B00000;
+        }
+
+        /* Hero Section Styling */
+        .hero-section {
+            background-size: cover;
+            background-position: center;
+            position: relative;
+            padding-top: 5rem; /* py-20 */
+            padding-bottom: 5rem; /* py-20 */
+            overflow: hidden;
+        }
+
+        /* New: Background image animation container */
+        .hero-background-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden; /* Hide overflow from scaling image */
+        }
+
+        /* New: Background image itself with animation */
+        .hero-background-image {
+            width: 100%;
+            height: 100%;
+            background-image: url('https://placehold.co/1920x400/000000/333333?text=Discover+Your+Next+Read');
+            background-size: cover;
+            background-position: center;
+            animation: subtleZoom 20s infinite alternate ease-in-out; /* Subtle zoom animation */
+        }
+
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7); /* Dark overlay */
+            z-index: 0;
+        }
+
+        .hero-section .relative {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Keyframe Animations */
+        @keyframes fadeInFromBottom {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* New: Subtle zoom animation for background */
+        @keyframes subtleZoom {
+            0% {
+                transform: scale(1);
+            }
+            100% {
+                transform: scale(1.05);
+            }
+        }
+
+        .animate-fade-in-up {
+            animation: fadeInFromBottom 0.8s ease-out forwards;
+            opacity: 0; /* Hidden initially */
+        }
+
+        .delay-200 {
+            animation-delay: 0.2s;
+        }
+
+        .delay-400 {
+            animation-delay: 0.4s;
+        }
+        /* Adjusted delay for tagline and button */
+        .delay-600 {
+            animation-delay: 0.6s;
+        }
+        .delay-800 {
+            animation-delay: 0.8s;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-inter">
+    <div class="overlay" id="overlay" onclick="closeAllModals()"></div>
+
+    <div id="messageBox" class="message-box">
+        <p id="messageText"></p>
+        <button onclick="hideMessageBox()" class="mt-4 px-4 py-2 rounded-md font-semibold dynamic-btn">OK</button>
+    </div>
+
+    <header class="p-4 shadow-lg flex justify-between items-center rounded-b-lg" style="background-color: #1A1A1A;">
+        <h1 class="text-3xl text-white">Bookzz</h1>
+        <nav>
+            <ul class="flex space-x-6">
+                <li><a href="#" class="hover:text-maroon-300 transition duration-300 font-semibold" style="color: #E0E0E0;">Home</a></li>
+                <li><a href="#" class="hover:text-maroon-300 transition duration-300 font-semibold" style="color: #E0E0E0;">Categories</a></li>
+                <li><a href="#" class="hover:text-maroon-300 transition duration-300 font-semibold" style="color: #E0E0E0;">About Us</a></li>
+                <li><a href="#" class="hover:text-maroon-300 transition duration-300 font-semibold" style="color: #E0E0E0;">Contact</a></li>
+            </ul>
+        </nav>
+        <div class="relative cursor-pointer" onclick="toggleCart()">
+            <span class="text-3xl" style="color: #E0E0E0;">🛒</span>
+            <span id="cart-count" class="absolute -top-2 -right-2 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center" style="background-color: #B00000;">0</span>
+        </div>
+    </header>
+
+    <section class="hero-section text-center py-20 px-4 relative overflow-hidden">
+        <div class="hero-background-container">
+            <div class="hero-background-image"></div>
+        </div>
+        <div class="absolute inset-0 bg-black opacity-70"></div>
+        <div class="relative z-10">
+            <h2 class="text-5xl md:text-7xl font-bebas-neue text-white mb-4 animate-fade-in-up">Discover Your Next Adventure</h2>
+            <p class="text-xl md:text-2xl text-gray-300 font-inter animate-fade-in-up delay-200">Explore a world of stories, knowledge, and imagination.</p>
+            <p class="text-lg md:text-xl font-inter font-semibold animate-fade-in-up delay-400" style="color: #B00000;">"Let the pages talk to you"</p>
+            <a href="#books-section" class="mt-8 inline-block px-8 py-3 rounded-full text-lg font-semibold dynamic-btn animate-fade-in-up delay-600">Browse Books</a>
+        </div>
+    </section>
+
+    <main class="container mx-auto p-4 flex flex-col md:flex-row gap-6 mt-6">
+        <section id="books-section" class="flex-grow p-6 rounded-lg shadow-lg" style="background-color: #1A1A1A; border: 1px solid #333333;">
+            <h2 class="text-2xl mb-6" style="color: #B00000;">Our Books</h2>
+            <div class="mb-6 p-4 rounded-lg shadow-inner flex flex-col sm:flex-row items-center gap-4" style="background-color: #1A1A1A; border: 1px solid #333333;">
+                <label for="categoryFilter" class="font-medium whitespace-nowrap" style="color: #E0E0E0;">Filter by Category:</label>
+                <select id="categoryFilter" onchange="filterAndRenderBooks()"
+                        class="p-2 border rounded-md focus:ring-maroon-500 focus:border-maroon-500">
+                    <option value="all">All Categories</option>
+                    </select>
+            </div>
+
+            <div id="books-container">
+                </div>
+        </section>
+
+        <aside id="cart-sidebar" class="sidebar w-full md:w-80 p-6 rounded-l-lg shadow-xl flex flex-col">
+            <h2 class="text-2xl mb-6 border-b pb-4" style="color: #B00000; border-color: #333333;">Your Cart</h2>
+            <div id="cart-items" class="flex-grow overflow-y-auto mb-6">
+                <p class="text-gray-500" style="color: #A0A0A0;">Your cart is empty.</p>
+            </div>
+            <div class="cart-summary border-t pt-4" style="border-color: #333333;">
+                <p class="text-xl font-bold text-right mb-4" style="color: #B00000;">Total: ₹<span id="cart-total">0.00</span></p>
+                <button class="checkout-btn w-full py-3 rounded-lg font-semibold shadow-md dynamic-btn" onclick="openCheckoutModal()">Checkout</button>
+            </div>
+        </aside>
+    </main>
+
+    <div id="checkoutModal" class="checkout-modal">
+        <div class="checkout-modal-header">
+            <h2 class="font-montserrat">Checkout</h2>
+            <span class="checkout-modal-close" onclick="closeCheckoutModal()">&times;</span>
+        </div>
+        <form id="checkoutForm" class="checkout-form">
+            <label for="fullName">Full Name:</label>
+            <input type="text" id="fullName" name="fullName" required>
+
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required>
+
+            <label for="address">Shipping Address:</label>
+            <textarea id="address" name="address" rows="3" required></textarea>
+
+            <div class="checkout-order-summary">
+                <h3 class="font-montserrat">Order Summary</h3>
+                <div id="checkout-items-summary">
+                    </div>
+                <p class="checkout-order-total">Total: ₹<span id="checkout-total-summary">0.00</span></p>
+            </div>
+
+            <button type="submit" class="w-full py-3 mt-6 rounded-lg font-semibold shadow-md dynamic-btn">Place Order</button>
+        </form>
+    </div>
+
+    <footer class="text-white text-center p-6 mt-10 rounded-t-lg" style="background-color: #1A1A1A;">
+        <p>&copy; 2025 Bookzz. All rights reserved.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Get references to DOM elements
+            const booksContainer = document.getElementById('books-container');
+            const cartItemsContainer = document.getElementById('cart-items');
+            const cartCountSpan = document.getElementById('cart-count');
+            const cartTotalSpan = document.getElementById('cart-total');
+            const cartSidebar = document.getElementById('cart-sidebar');
+            const overlay = document.getElementById('overlay');
+            const messageBox = document.getElementById('messageBox');
+            const messageText = document.getElementById('messageText');
+            const categoryFilter = document.getElementById('categoryFilter');
+
+            // Checkout modal elements
+            const checkoutModal = document.getElementById('checkoutModal');
+            const checkoutItemsSummary = document.getElementById('checkout-items-summary');
+            const checkoutTotalSummary = document.getElementById('checkout-total-summary');
+            const checkoutForm = document.getElementById('checkoutForm');
+
+
+            // Initialize cart as an empty array
+            let cart = [];
+
+            // Approximate conversion rate (1 USD to INR) - This should ideally be fetched from a live API
+            const USD_TO_INR_RATE = 83.5; // As of late May 2025, approximate
+
+            // Original prices (conceptual USD values for conversion)
+            const originalBooks = [
+                { id: 1, title: "The Hitchhiker's Guide to the Galaxy", author: "Douglas Adams", price: 12.99, category: "Science Fiction", image: "https://placehold.co/150x200/B00000/FFFFFF?text=Hitchhiker's+Guide" }, // Maroon with White text
+                { id: 2, title: "Pride and Prejudice", author: "Jane Austen", price: 9.50, category: "Classics", image: "https://placehold.co/150x200/004D40/E0E0E0?text=Pride+and+Prejudice" }, // Dark Teal with Light Gray text
+                { id: 3, title: "1984", author: "George Orwell", price: 11.25, category: "Dystopian", image: "https://placehold.co/150x200/4A148C/FFFFFF?text=1984" }, // Dark Purple with White text
+                { id: 4, title: "To Kill a Mockingbird", author: "Harper Lee", price: 10.00, category: "Classics", image: "https://placehold.co/150x200/1B5E20/E0E0E0?text=To+Kill+a+Mockingbird" }, // Dark Green with Light Gray text
+                { id: 5, title: "The Great Gatsby", author: "F. Scott Fitzgerald", price: 8.75, category: "Classics", image: "https://placehold.co/150x200/B00000/FFFFFF?text=The+Great+Gatsby" },
+                { id: 6, title: "Sapiens: A Brief History of Humankind", author: "Yuval Noah Harari", price: 15.99, category: "Non-Fiction", image: "https://placehold.co/150x200/004D40/E0E0E0?text=Sapiens" },
+                { id: 7, title: "Dune", author: "Frank Herbert", price: 14.50, category: "Science Fiction", image: "https://placehold.co/150x200/4A148C/FFFFFF?text=Dune" },
+                { id: 8, title: "The Lord of the Rings", author: "J.R.R. Tolkien", price: 20.00, category: "Fantasy", image: "https://placehold.co/150x200/1B5E20/E0E0E0?text=Lord+of+the+Rings" },
+                { id: 9, title: "Cosmos", author: "Carl Sagan", price: 120.00, category: "Science", image: "https://placehold.co/150x200/B00000/FFFFFF?text=Cosmos" },
+                { id: 10, title: "A Brief History of Time", author: "Stephen Hawking", price: 110.50, category: "Science", image: "https://placehold.co/150x200/004D40/E0E0E0?text=Brief+History+of+Time" },
+                { id: 11, title: "The Art of Computer Programming, Vol. 1", author: "Donald Knuth", price: 150.75, category: "Technology", image: "https://placehold.co/150x200/4A148C/FFFFFF?text=Art+of+Comp+Prog" },
+                { id: 12, title: "Structures or Why Things Don't Fall Down", author: "J.E. Gordon", price: 95.00, category: "Engineering", image: "https://placehold.co/150x200/1B5E20/E0E0E0?text=Structures" },
+                // --- New Books Added Below ---
+                { id: 13, title: "Foundation", author: "Isaac Asimov", price: 18.00, category: "Science Fiction", image: "https://placehold.co/150x200/B00000/FFFFFF?text=Foundation" },
+                { id: 14, title: "To the Lighthouse", author: "Virginia Woolf", price: 10.50, category: "Classics", image: "https://placehold.co/150x200/004D40/E0E0E0?text=To+the+Lighthouse" },
+                { id: 15, title: "Brave New World", author: "Aldous Huxley", price: 13.00, category: "Dystopian", image: "https://placehold.co/150x200/4A148C/FFFFFF?text=Brave+New+World" },
+                { id: 16, title: "The Hobbit", author: "J.R.R. Tolkien", price: 16.75, category: "Fantasy", image: "https://placehold.co/150x200/1B5E20/E0E0E0?text=The+Hobbit" },
+                { id: 17, title: "Thinking, Fast and Slow", author: "Daniel Kahneman", price: 105.00, category: "Non-Fiction", image: "https://placehold.co/150x200/B00000/FFFFFF?text=Thinking+Fast+Slow" },
+                { id: 18, title: "The Elegant Universe", author: "Brian Greene", price: 115.00, category: "Science", image: "https://placehold.co/150x200/004D40/E0E0E0?text=Elegant+Universe" },
+                { id: 19, title: "Clean Code", author: "Robert C. Martin", price: 130.00, category: "Technology", image: "https://placehold.co/150x200/4A148C/FFFFFF?text=Clean+Code" },
+                { id: 20, title: "The Alchemist", author: "Paulo Coelho", price: 9.00, category: "Fiction", image: "https://placehold.co/150x200/1B5E20/E0E0E0?text=The+Alchemist" },
+                { id: 21, title: "The Martian", author: "Andy Weir", price: 14.25, category: "Science Fiction", image: "https://placehold.co/150x200/B00000/FFFFFF?text=The+Martian" },
+                { id: 22, title: "Educated", author: "Tara Westover", price: 11.75, category: "Biography", image: "https://placehold.co/150x200/004D40/E0E0E0?text=Educated" },
+                { id: 23, title: "Project Hail Mary", author: "Andy Weir", price: 16.50, category: "Science Fiction", image: "https://placehold.co/150x200/4A148C/FFFFFF?text=Project+Hail+Mary" },
+                { id: 24, title: "Circe", author: "Madeline Miller", price: 12.00, category: "Fantasy", image: "https://placehold.co/150x200/1B5E20/E0E0E0?text=Circe" },
+                { id: 25, title: "Atomic Habits", author: "James Clear", price: 10.00, category: "Self-Help", image: "https://placehold.co/150x200/B00000/FFFFFF?text=Atomic+Habits" },
+                { id: 26, title: "Where the Crawdads Sing", author: "Delia Owens", price: 11.00, category: "Mystery", image: "https://placehold.co/150x200/004D40/E0E0E0?text=Crawdads+Sing" },
+                { id: 27, title: "The Midnight Library", author: "Matt Haig", price: 13.50, category: "Fiction", image: "https://placehold.co/150x200/4A148C/FFFFFF?text=Midnight+Library" },
+                { id: 28, title: "Daring Greatly", author: "Brené Brown", price: 9.75, category: "Self-Help", image: "https://placehold.co/150x200/1B5E20/E0E0E0?text=Daring+Greatly" },
+                { id: 29, title: "The Silent Patient", author: "Alex Michaelides", price: 10.25, category: "Thriller", image: "https://placehold.co/150x200/B00000/FFFFFF?text=Silent+Patient" },
+                { id: 30, title: "Becoming", author: "Michelle Obama", price: 15.00, category: "Biography", image: "https://placehold.co/150x200/004D40/E0E0E0?text=Becoming" }
+            ];
+
+            // Convert prices to INR
+            const books = originalBooks.map(book => ({
+                ...book,
+                price: parseFloat((book.price * USD_TO_INR_RATE).toFixed(2)) // Convert and fix to 2 decimal places
+            }));
+
+            /**
+             * Populates the category filter dropdown with unique categories from the books data.
+             */
+            function populateCategoryFilter() {
+                const categories = ['all', ...new Set(books.map(book => book.category))].sort();
+                categoryFilter.innerHTML = '<option value="all">All Categories</option>'; // Always have 'All' option
+                categories.forEach(category => {
+                    if (category !== 'all') { // Avoid adding 'all' twice
+                        const option = document.createElement('option');
+                        option.value = category;
+                        option.textContent = category;
+                        categoryFilter.appendChild(option);
+                    }
+                });
+            }
+
+
+            /**
+             * Displays a custom message box.
+             * @param {string} message - The message to display.
+             */
+            function showMessageBox(message) {
+                messageText.textContent = message;
+                messageBox.classList.add('show');
+            }
+
+            /**
+             * Hides the custom message box.
+             */
+            window.hideMessageBox = function() {
+                messageBox.classList.remove('show');
+            };
+
+            /**
+             * Calls the Gemini API to summarize a book.
+             * @param {string} title - The title of the book.
+             * @param {string} author - The author of the book.
+             */
+            window.summarizeBook = async function(title, author) {
+                showMessageBox(`✨ Generating summary for "${title}"...`);
+                try {
+                    let chatHistory = [];
+                    const prompt = `Summarize the book "${title}" by ${author} in about 3-4 sentences. Focus on the main plot and themes.`;
+                    chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+                    const payload = { contents: chatHistory };
+                    const apiKey = ""; // Leave as-is, Canvas will provide at runtime
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    // Log the HTTP status and status text
+                    console.log('Gemini API Response Status:', response.status, response.statusText);
+
+                    // Check for HTTP errors first
+                    if (!response.ok) {
+                        const errorBody = await response.text(); // Get raw error body
+                        console.error('Gemini API HTTP Error:', response.status, response.statusText, errorBody);
+                        showMessageBox(`✨ API Error: ${response.status} ${response.statusText}. See console for details.`);
+                        return; // Stop execution if HTTP error
+                    }
+
+                    const result = await response.json();
+                    console.log('Gemini API Full Response:', result); // Log the full response object
+
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        const summary = result.candidates[0].content.parts[0].text;
+                        showMessageBox(`✨ Summary for "${title}":\n\n${summary}`);
+                    } else {
+                        showMessageBox('✨ Could not generate summary. Response structure unexpected or empty.');
+                        console.error('Gemini API response structure unexpected or empty candidates:', result);
+                    }
+                } catch (error) {
+                    showMessageBox('✨ Error generating summary. Please check your connection or try again later.');
+                    console.error('Error calling Gemini API for summary:', error);
+                }
+            };
+
+            /**
+             * Calls the Gemini API to get insights about an author.
+             * @param {string} authorName - The name of the author.
+             */
+            window.getAuthorInsights = async function(authorName) {
+                showMessageBox(`✨ Getting insights for "${authorName}"...`);
+                try {
+                    let chatHistory = [];
+                    const prompt = `Provide a brief biography and some interesting facts about the author ${authorName} in about 3-5 sentences.`;
+                    chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+                    const payload = { contents: chatHistory };
+                    const apiKey = ""; // Leave as-is, Canvas will provide at runtime
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    // Log the HTTP status and status text
+                    console.log('Gemini API Response Status (Author Insights):', response.status, response.statusText);
+
+                    // Check for HTTP errors first
+                    if (!response.ok) {
+                        const errorBody = await response.text(); // Get raw error body
+                        console.error('Gemini API HTTP Error (Author Insights):', response.status, response.statusText, errorBody);
+                        showMessageBox(`✨ API Error: ${response.status} ${response.statusText}. See console for details.`);
+                        return; // Stop execution if HTTP error
+                    }
+
+                    const result = await response.json();
+                    console.log('Gemini API Full Response (Author Insights):', result); // Log the full response object
+
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        const insights = result.candidates[0].content.parts[0].text;
+                        showMessageBox(`✨ Insights for "${authorName}":\n\n${insights}`);
+                    } else {
+                        showMessageBox('✨ Could not retrieve author insights. Response structure unexpected or empty.');
+                        console.error('Gemini API response structure unexpected or empty candidates (Author Insights):', result);
+                    }
+                } catch (error) {
+                    showMessageBox('✨ Error getting author insights. Please check your connection or try again later.');
+                    console.error('Error calling Gemini API for author insights:', error);
+                }
+            };
+
+            /**
+             * Filters books based on the selected category filter and then renders them,
+             * grouped by category.
+             */
+            window.filterAndRenderBooks = function() {
+                const selectedCategory = categoryFilter.value;
+                let filteredBooks = [...books];
+
+                if (selectedCategory !== 'all') {
+                    filteredBooks = filteredBooks.filter(book => book.category === selectedCategory);
+                }
+
+                const booksByCategory = filteredBooks.reduce((acc, book) => {
+                    const category = book.category || 'Uncategorized';
+                    if (!acc[category]) {
+                        acc[category] = [];
+                    }
+                    acc[category].push(book);
+                    return acc;
+                }, {});
+
+                booksContainer.innerHTML = '';
+
+                const sortedCategories = Object.keys(booksByCategory).sort();
+
+                if (sortedCategories.length === 0) {
+                    booksContainer.innerHTML = `<p class="text-center text-gray-500" style="color: #A0A0A0;">No books found for this category.</p>`;
+                    return;
+                }
+
+                sortedCategories.forEach(category => {
+                    const categorySection = document.createElement('div');
+                    categorySection.classList.add('mb-8');
+                    categorySection.innerHTML = `
+                        <h3 class="text-xl font-montserrat mb-4" style="color: #B00000;">${category}</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            </div>
+                    `;
+                    const categoryBooksGrid = categorySection.querySelector('div.grid');
+
+                    booksByCategory[category].forEach(book => {
+                        const bookCardDiv = document.createElement('div');
+                        bookCardDiv.classList.add(
+                            'book-card', 'p-4', 'rounded-lg', 'shadow-md',
+                            'text-center', 'flex', 'flex-col', 'justify-between',
+                            'transform', 'hover:scale-105', 'transition-transform', 'duration-200'
+                        );
+
+                        const flipkartSearchQuery = encodeURIComponent(`${book.title} ${book.author} book`);
+                        const flipkartUrl = `https://www.flipkart.com/search?q=${flipkartSearchQuery}`;
+
+                        bookCardDiv.addEventListener('click', (event) => {
+                            if (!event.target.closest('button')) {
+                                window.open(flipkartUrl, '_blank', 'noopener,noreferrer');
+                            }
+                        });
+
+                        bookCardDiv.innerHTML = `
+                            <img src="${book.image}" alt="${book.title}" class="w-full h-48 object-contain mb-4 rounded-md">
+                            <h3 class="text-lg font-montserrat mb-2">${book.title}</h3>
+                            <p class="text-sm mb-2" style="color: #A0A0A0;">${book.author}</p>
+                            <p class="text-xl font-bold mb-4 mt-auto" style="color: #B00000;">₹${book.price.toFixed(2)}</p>
+                            <div class="llm-btn-group">
+                                <button onclick="event.stopPropagation(); summarizeBook('${book.title}', '${book.author}');"
+                                        class="llm-btn">
+                                    ✨ Summarize
+                                </button>
+                                <button onclick="event.stopPropagation(); getAuthorInsights('${book.author}');"
+                                        class="llm-btn">
+                                    ✨ Author Insights
+                                </button>
+                            </div>
+                            <button onclick="event.stopPropagation(); addToCart(${book.id});"
+                                    class="py-2 px-4 rounded-md shadow-sm dynamic-btn mt-4">
+                                Add to Cart
+                            </button>
+                        `;
+                        categoryBooksGrid.appendChild(bookCardDiv);
+                    });
+                    booksContainer.appendChild(categorySection);
+                });
+            }
+
+            /**
+             * Adds a book to the shopping cart. If the book is already in the cart, its quantity is increased.
+             * @param {number} bookId - The ID of the book to add.
+             */
+            window.addToCart = function(bookId) {
+                const bookToAdd = books.find(book => book.id === bookId);
+                if (bookToAdd) {
+                    const existingCartItem = cart.find(item => item.id === bookId);
+                    if (existingCartItem) {
+                        existingCartItem.quantity++;
+                        showMessageBox(`${bookToAdd.title} quantity updated in cart!`);
+                    } else {
+                        cart.push({ ...bookToAdd, quantity: 1 });
+                        showMessageBox(`${bookToAdd.title} added to cart!`);
+                    }
+                    updateCartDisplay();
+                    toggleCart(true); // Open cart sidebar when an item is added
+                }
+            };
+
+            /**
+             * Removes an item from the shopping cart.
+             * @param {number} bookId - The ID of the book to remove.
+             */
+            window.removeFromCart = function(bookId) {
+                cart = cart.filter(item => item.id !== bookId);
+                updateCartDisplay();
+                showMessageBox('Item removed from cart.');
+            };
+
+            /**
+             * Updates the display of the shopping cart, including items, total price, and item count.
+             */
+            function updateCartDisplay() {
+                cartItemsContainer.innerHTML = ''; // Clear existing cart items
+                if (cart.length === 0) {
+                    cartItemsContainer.innerHTML = '<p class="text-gray-500" style="color: #A0A0A0;">Your cart is empty.</p>';
+                    cartTotalSpan.textContent = '0.00';
+                    cartCountSpan.textContent = '0';
+                    return;
+                }
+
+                let total = 0;
+                let itemCount = 0;
+
+                cart.forEach(item => {
+                    const cartItemDiv = document.createElement('div');
+                    // Apply Tailwind classes for cart item styling
+                    cartItemDiv.classList.add(
+                        'cart-item', 'flex', 'justify-between', 'items-center',
+                        'py-3', 'last:border-b-0'
+                    );
+                    cartItemDiv.innerHTML = `
+                        <div class="flex-grow">
+                            <h4 class="font-medium" style="color: #E0E0E0;">${item.title}</h4>
+                            <p class="text-sm" style="color: #B00000;">${item.quantity} x ₹${item.price.toFixed(2)}</p>
+                        </div>
+                        <button onclick="removeFromCart(${item.id})"
+                                class="py-1 px-3 rounded-md text-sm dynamic-btn">
+                            Remove
+                        </button>
+                    `;
+                    cartItemsContainer.appendChild(cartItemDiv);
+                    total += item.price * item.quantity;
+                    itemCount += item.quantity;
+                });
+
+                cartTotalSpan.textContent = total.toFixed(2);
+                cartCountSpan.textContent = itemCount;
+            }
+
+            /**
+             * Toggles the visibility of the cart sidebar and the overlay.
+             * @param {boolean} [forceOpen=false] - If true, forces the cart to open.
+             */
+            window.toggleCart = function(forceOpen = false) {
+                if (forceOpen) {
+                    cartSidebar.classList.add('active');
+                    overlay.classList.add('active');
+                } else {
+                    cartSidebar.classList.toggle('active');
+                    overlay.classList.toggle('active');
+                }
+                // Ensure checkout modal is closed when toggling cart
+                if (cartSidebar.classList.contains('active')) {
+                    checkoutModal.classList.remove('active');
+                }
+            };
+
+            /**
+             * Opens the checkout modal and populates it with current cart items.
+             */
+            window.openCheckoutModal = function() {
+                if (cart.length === 0) {
+                    showMessageBox('Your cart is empty. Please add items before checking out.');
+                    return;
+                }
+
+                // Close cart sidebar if open
+                cartSidebar.classList.remove('active');
+
+                checkoutItemsSummary.innerHTML = ''; // Clear previous summary
+                let totalSummary = 0;
+
+                cart.forEach(item => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.classList.add('checkout-order-item');
+                    itemDiv.innerHTML = `
+                        <span style="color: #A0A0A0;">${item.title} (x${item.quantity})</span>
+                        <span style="color: #B00000;">₹${(item.price * item.quantity).toFixed(2)}</span>
+                    `;
+                    checkoutItemsSummary.appendChild(itemDiv);
+                    totalSummary += item.price * item.quantity;
+                });
+
+                checkoutTotalSummary.textContent = totalSummary.toFixed(2);
+
+                checkoutModal.classList.add('active');
+                overlay.classList.add('active'); // Activate overlay for modal
+            };
+
+            /**
+             * Closes the checkout modal.
+             */
+            window.closeCheckoutModal = function() {
+                checkoutModal.classList.remove('active');
+                overlay.classList.remove('active'); // Deactivate overlay
+            };
+
+            /**
+             * Closes all active modals/sidebars.
+             */
+            window.closeAllModals = function() {
+                cartSidebar.classList.remove('active');
+                checkoutModal.classList.remove('active');
+                overlay.classList.remove('active');
+            };
+
+            // Handle checkout form submission
+            checkoutForm.addEventListener('submit', function(event) {
+                event.preventDefault(); // Prevent default form submission
+
+                // In a real application, you would send this data to a backend for processing
+                const formData = new FormData(checkoutForm);
+                const orderDetails = {
+                    fullName: formData.get('fullName'),
+                    email: formData.get('email'),
+                    address: formData.get('address'),
+                    items: cart,
+                    total: parseFloat(checkoutTotalSummary.textContent)
+                };
+
+                console.log("Order placed:", orderDetails); // Log order details
+
+                // Simulate order success
+                showMessageBox('Order placed successfully! Thank you for your purchase.');
+                cart = []; // Clear the cart
+                updateCartDisplay(); // Update cart display
+                closeCheckoutModal(); // Close the modal
+                checkoutForm.reset(); // Clear the form
+            });
+
+            // Initial population and rendering when the page loads
+            populateCategoryFilter(); // Populate the dropdown
+            filterAndRenderBooks(); // Render books based on initial filter (All Categories)
+            updateCartDisplay();
+        });
+    </script>
+</body>
+</html>
